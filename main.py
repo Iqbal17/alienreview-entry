@@ -67,6 +67,17 @@ rather than a list (criterion 5). (b) "I have been to three" became
 register, so the closing lands as a review verdict instead of a
 casual aside (criteria 4, 5). The revised line is 132 characters,
 inside the 200 cap.
+
+Pass 3 — validation guard (fix pass):
+
+The sealed gate gives an invalid entry a Valid of 0 with no rate and
+no prize, so the program must never be able to emit one even if LINE
+is edited later. Added a guard at the top of main(): it raises
+ValueError when the line is blank or whitespace-only, proves the text
+is valid UTF-8 by encoding it, and raises ValueError with the
+character count when the line exceeds 200 characters. The guard runs
+before any write, so a bad line fails loudly instead of producing a
+dead entry. Write behaviour for a valid line is unchanged.
 """
 
 import os
@@ -79,6 +90,13 @@ LINE = (
 
 
 def main():
+    if not LINE.strip():
+        raise ValueError("entry line must not be blank")
+    LINE.encode("utf-8")
+    if len(LINE) > 200:
+        raise ValueError(
+            f"entry line must be at most 200 characters, got {len(LINE)}"
+        )
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     path = os.path.join(out_dir, "entry.txt")
     os.makedirs(out_dir, exist_ok=True)
